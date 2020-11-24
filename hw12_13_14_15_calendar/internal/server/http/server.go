@@ -1,8 +1,6 @@
 package internalhttp
 
-import (
-	"context"
-)
+import "context"
 
 type Server struct {
 	// TODO
@@ -16,17 +14,13 @@ func NewServer(app Application) *Server {
 	return &Server{}
 }
 
-func (s *Server) Start(ctx context.Context) error {
+func (s *Server) Start() error {
 	// TODO
-	select {
-	case <-ctx.Done():
-		return nil
-	}
 }
 
-func (s *Server) Stop(ctx context.Context) error {
+func (s *Server) Stop() error {
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	// TODO
-	return nil
 }
 
 // TODO

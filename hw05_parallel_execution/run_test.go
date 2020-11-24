@@ -1,7 +1,6 @@
 package hw05_parallel_execution //nolint:golint,stylecheck
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 	"sync/atomic"
@@ -32,9 +31,9 @@ func TestRun(t *testing.T) {
 
 		workersCount := 10
 		maxErrorsCount := 23
-		err := Run(tasks, workersCount, maxErrorsCount)
+		result := Run(tasks, workersCount, maxErrorsCount)
 
-		require.Truef(t, errors.Is(err, ErrErrorsLimitExceeded), "actual err - %v", err)
+		require.Equal(t, ErrErrorsLimitExceeded, result)
 		require.LessOrEqual(t, runTasksCount, int32(workersCount+maxErrorsCount), "extra tasks were started")
 	})
 
@@ -60,9 +59,9 @@ func TestRun(t *testing.T) {
 		maxErrorsCount := 1
 
 		start := time.Now()
-		err := Run(tasks, workersCount, maxErrorsCount)
+		result := Run(tasks, workersCount, maxErrorsCount)
 		elapsedTime := time.Since(start)
-		require.NoError(t, err)
+		require.Nil(t, result)
 
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
