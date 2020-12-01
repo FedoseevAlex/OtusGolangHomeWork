@@ -8,14 +8,16 @@ import (
 	"github.com/beevik/ntp"
 )
 
+const ntpServer = "ntp3.stratum2.ru"
+
 func main() {
 	currentTime := time.Now()
 
-	NTPtime, err := ntp.Time("ntp3.stratum2.ru")
+	ntpTime, err := ntp.Time(ntpServer)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("current time: %s\n", currentTime.Format("2006-01-02 15:04:05 -0700 MST"))
-	fmt.Printf("exact time: %s\n", NTPtime.Round(time.Second))
+	fmt.Println("current time:", currentTime.Format("2006-01-02 15:04:05 -0700 MST"))
+	fmt.Println("exact time:", ntpTime.Round(time.Second))
 }
