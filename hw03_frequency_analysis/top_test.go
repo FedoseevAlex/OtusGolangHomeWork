@@ -6,8 +6,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type testCase struct {
+	Name     string
+	Input    string
+	Expected []string
+}
+
 // Change to true if needed
-var taskWithAsteriskIsCompleted = false
+var taskWithAsteriskIsCompleted = true
 
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -57,4 +63,44 @@ func TestTop10(t *testing.T) {
 			require.ElementsMatch(t, expected, Top10(text))
 		}
 	})
+}
+
+var testCases = []testCase{
+	{
+		"simple test with punctuation and capital letters",
+		`a, A. a; A:  A.....  a!!! a-a 'A' "A"
+		 a?`,
+		[]string{"a", "aa"},
+	},
+	{
+		"simple test with numbers",
+		`1, 2. 3; 4: 5!!! 6-7 '8' "9" 10?`,
+		[]string{"1", "2", "3", "4", "5", "67", "8", "9", "10"},
+	},
+}
+
+func TestTop10Additional(t *testing.T) {
+	if !taskWithAsteriskIsCompleted {
+		return
+	}
+	for _, test := range testCases {
+		test := test
+		t.Run(
+			test.Name,
+			func(t *testing.T) {
+				t.Parallel()
+				require.ElementsMatch(t, test.Expected, Top10(test.Input))
+			},
+		)
+	}
+}
+
+var result []string
+
+func BenchmarkTop10(b *testing.B) {
+	var r []string
+	for i := 0; i < b.N; i++ {
+		r = Top10(text)
+	}
+	result = r
 }
