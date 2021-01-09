@@ -11,9 +11,9 @@ type List interface {
 }
 
 type listItem struct {
-	Value interface{} // значение
-	Next  *listItem   // следующий элемент
-	Prev  *listItem   // предыдущий элемент
+	Value interface{}
+	Next  *listItem
+	Prev  *listItem
 }
 
 type list struct {
@@ -37,17 +37,19 @@ func (l *list) Back() *listItem {
 func (l *list) PushFront(v interface{}) *listItem {
 	elem := &listItem{Value: v, Next: l.First, Prev: nil}
 
+	// Second element after push to front
 	second := l.First
 
 	l.First = elem
 
-	if second != nil {
+	// Connect first element to second
+	if second == nil {
+		// If we pushed first element to front
+		// then mark it as the last element too
+		l.Last = l.First
+	} else {
 		second.Prev = l.First
 		l.First.Next = second
-	}
-
-	if l.Len() == 0 {
-		l.Last = l.First
 	}
 
 	l.Length++
@@ -57,15 +59,19 @@ func (l *list) PushFront(v interface{}) *listItem {
 
 func (l *list) PushBack(v interface{}) *listItem {
 	elem := &listItem{Value: v, Next: nil, Prev: l.Last}
+
 	previous := l.Last
+
 	l.Last = elem
 
-	if previous != nil {
-		previous.Next = l.Last
-	}
-
-	if l.Len() == 0 {
+	// Connect last element to the end of list
+	if previous == nil {
+		// If we are here it means that we are
+		// pushing first element to the back
 		l.First = l.Last
+	} else {
+		previous.Next = l.Last
+		l.Last.Prev = previous
 	}
 
 	l.Length++
@@ -74,22 +80,28 @@ func (l *list) PushBack(v interface{}) *listItem {
 }
 
 func (l *list) Remove(i *listItem) {
+	// Save surrounding elements
 	previous := i.Prev
 	next := i.Next
 
+	// Clear links in removable item
 	i.Next = nil
 	i.Prev = nil
 
-	if previous != nil {
-		previous.Next = next
-	} else {
+	// Connect surrounding elements
+	// to each other
+	if previous == nil {
+		// Removal of the first element
 		l.First = next
+	} else {
+		previous.Next = next
 	}
 
-	if next != nil {
-		next.Prev = previous
-	} else {
+	if next == nil {
+		// Removal of last element
 		l.Last = previous
+	} else {
+		next.Prev = previous
 	}
 
 	l.Length--
@@ -98,13 +110,15 @@ func (l *list) Remove(i *listItem) {
 func (l *list) MoveToFront(i *listItem) {
 	previous := i.Prev
 	if previous == nil {
-		// no need to move first element to front
+		// If we are trying to move
+		// first element to front then just return
 		return
 	}
 
 	next := i.Next
 	second := l.First
 
+	// Connect next and previous elements
 	previous.Next = next
 
 	if next == nil {
@@ -113,10 +127,13 @@ func (l *list) MoveToFront(i *listItem) {
 		next.Prev = previous
 	}
 
+	// Connect specified and second elements
 	i.Next = second
 	second.Prev = i
-	i.Prev = nil
+
+	// Move specified element to front
 	l.First = i
+	i.Prev = nil
 }
 
 func NewList() List {
