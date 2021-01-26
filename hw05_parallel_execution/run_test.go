@@ -66,4 +66,56 @@ func TestRun(t *testing.T) {
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
 	})
+
+	t.Run("disable error counting", func(t *testing.T) {
+		tasksCount := 10
+		tasks := make([]Task, 0, tasksCount)
+
+		// Random error probability
+		errorProbability := rand.Intn(100)
+
+		var runTasksCount int32
+		var sumTime time.Duration
+
+		for i := 0; i < tasksCount; i++ {
+			taskSleep := time.Millisecond * time.Duration(rand.Intn(100))
+			sumTime += taskSleep
+
+			tasks = append(tasks, func() error {
+				var err error
+
+				// Randomly failed tasks
+				if rand.Intn(100) > errorProbability {
+					err = fmt.Errorf("Random error")
+				}
+
+				time.Sleep(taskSleep)
+				atomic.AddInt32(&runTasksCount, 1)
+				return err
+			})
+		}
+
+		workersCount := 5
+		maxErrorsCount := 0
+
+		start := time.Now()
+		result := Run(tasks, workersCount, maxErrorsCount)
+		elapsedTime := time.Since(start)
+		require.Nil(t, result)
+
+		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
+		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
+	})
+
+	t.Run("zero workers", func(t *testing.T) {
+		tasksCount := 10
+		tasks := make([]Task, 0, tasksCount)
+
+		workersCount := 0
+		maxErrorsCount := 5
+
+		result := Run(tasks, workersCount, maxErrorsCount)
+		require.Equal(t, ErrNoWorkers, result)
+
+	})
 }
