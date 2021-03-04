@@ -1,0 +1,29 @@
+package internalhttp
+
+import "context"
+
+type Server struct { // TODO
+}
+
+type Application interface { // TODO
+}
+
+func NewServer(app Application) *Server {
+	return &Server{}
+}
+
+func (s *Server) Start() error {
+	// TODO
+<<<<<<< HEAD
+=======
+	<-ctx.Done()
+	return nil
+>>>>>>> aef758cbd2ab70607d4f25bd4f5ace4d8c0f1b5c
+}
+
+func (s *Server) Stop() error {
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	// TODO
+}
+
+// TODO
