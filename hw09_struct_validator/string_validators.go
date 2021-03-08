@@ -14,53 +14,58 @@ type StrLenValidator struct {
 	Len int
 }
 
-func (v StrLenValidator) IsValid(s interface{}) ValidationErrors {
-	vVal := reflect.ValueOf(s)
-	if vVal.Len() != v.Len {
-		return ValidationErrors{
-			ValidationError{
-				Field: v.Field,
-				Err:   errors.Wrapf(ErrStrLengthInvalid, "need %d, got %d", v.Len, vVal.Len()),
-			}}
+func (v *StrLenValidator) Validate() {
+	if v.Field.Len() != v.Len {
+		return
 	}
-	return nil
+
+	v.Errs = append(
+		v.Errs,
+		ValidationError{
+			Field: v.Field.Type().Name(),
+			Err:   errors.Wrapf(ErrStrLengthInvalid, "need %d, got %d", v.Len, v.Field.Len()),
+		},
+	)
 }
 
-func NewStrLenValidator(fieldName, tag string) (StrLenValidator, error) {
+func NewStrLenValidator(fieldValue reflect.Value, fieldInfo reflect.StructField) (*StrLenValidator, error) {
 	// Assume that tag is in format len:<N> where N is desired length
+	tag := fieldInfo.Tag.Get(validateTagName)
+	fieldName := fieldInfo.Name
+
 	tagParts := strings.Split(tag, ":")
 	if len(tagParts) != 2 {
-		return StrLenValidator{}, errors.Wrapf(ErrCorruptedTag, "Field: %s Tag: %s", fieldName, tag)
+		return nil, errors.Wrapf(ErrCorruptedTag, "Field: %s Tag: %s", fieldName, tag)
 	}
 
 	length, err := strconv.Atoi(tagParts[1])
 	if err != nil {
-		return StrLenValidator{}, errors.Wrapf(ErrLengthIsNotNumeric, "Field: %s Tag: %s", fieldName, tag)
+		return nil, errors.Wrapf(ErrLengthIsNotNumeric, "Field: %s Tag: %s", fieldName, tag)
 	}
 
-	return StrLenValidator{
-		BaseValidator: BaseValidator{Field: fieldName},
+	return &StrLenValidator{
+		BaseValidator: BaseValidator{Field: fieldValue},
 		Len:           length,
 	}, nil
 }
 
 type StrLenSliceValidator StrLenValidator
 
-func (v StrLenSliceValidator) IsValid(s interface{}) ValidationErrors {
-	sVal := reflect.ValueOf(s)
-
-	errs := make(ValidationErrors, 0, sVal.Len())
-	for i := 0; i < sVal.Len(); i++ {
-		err := v.IsValid(sVal.Index(i))
-		if err != nil {
-			errs = append(errs, err...)
+func (v StrLenSliceValidator) IsValid() {
+	for i := 0; i < v.Field.Len(); i++ {
+		elem := v.Field.Index(i)
+		if elem.Len() != v.Len {
+			return
 		}
-	}
-	if len(errs) > 0 {
-		return errs
-	}
 
-	return nil
+		v.Errs = append(
+			v.Errs,
+			ValidationError{
+				Field: v.Field.Type().Name(),
+				Err:   errors.Wrapf(ErrStrLengthInvalid, "need %d, got %d", v.Len, v.Field.Len()),
+			},
+		)
+	}
 }
 
 func NewStrLenSliceValidator(fieldName, tag string) (StrLenSliceValidator, error) {
