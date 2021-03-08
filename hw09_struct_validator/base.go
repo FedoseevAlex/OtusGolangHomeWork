@@ -1,9 +1,16 @@
 package hw09_struct_validator //nolint:golint,stylecheck
 
+import "reflect"
+
 type Validator interface {
-	IsValid(interface{}) ValidationErrors
+	Validate()
 }
 
 type BaseValidator struct {
-	Field string
+	Field reflect.Value
+	Errs  ValidationErrors
 }
+
+// Type for validator initializer function.
+// Requires reflect.Value to validate it
+type ValidatorInitFunc func(reflect.Value, reflect.StructField) (*Validator, error)
