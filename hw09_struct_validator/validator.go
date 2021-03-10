@@ -78,6 +78,15 @@ var validationSelector = ValidationSelector{
 		ElemKind:       reflect.String,
 		ValidationType: "regexp",
 	}: NewStrRegexpSliceValidator,
+	{
+		Kind:           reflect.String,
+		ValidationType: "in",
+	}: NewStrInValidator,
+	{
+		Kind:           reflect.Slice,
+		ElemKind:       reflect.String,
+		ValidationType: "in",
+	}: NewStrInSliceValidator,
 }
 
 // This function parses tag and calls initializers for validators.

@@ -16,6 +16,7 @@ var (
 	ErrTagParse            = errors.New("failed to parse tag")
 	ErrLengthIsNotNumeric  = errors.New("failed to convert length to int")
 	ErrRegexpMismatch      = errors.New("given string doesn't match pattern")
+	ErrNotInChoices        = errors.New("value not present in available choices")
 )
 
 type ValidationError struct {
