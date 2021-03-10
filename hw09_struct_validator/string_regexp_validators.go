@@ -8,10 +8,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: Write tests
-// Parses tag and tries to compile pattern
+// TODO: Write tests.
+// Parses tag and tries to compile pattern.
 func parseRegexpValidatorTag(tag string) (pattern *regexp.Regexp, err error) {
-	tagParts := strings.SplitN(tag, ":", 1)
+	tagParts := strings.SplitN(tag, ":", 2)
 	if len(tagParts) != 2 {
 		err = ErrCorruptedTag
 		return
@@ -30,7 +30,7 @@ type StrRegexpValidator struct {
 	Pattern *regexp.Regexp
 }
 
-func (v StrRegexpValidator) Validate() {
+func (v *StrRegexpValidator) Validate() {
 	s := v.Field.String()
 
 	ok := v.Pattern.MatchString(s)
@@ -84,7 +84,7 @@ func NewStrRegexpSliceValidator(fieldValue reflect.Value, fieldInfo reflect.Stru
 	}, nil
 }
 
-func (v StrRegexpSliceValidator) Validate() {
+func (v *StrRegexpSliceValidator) Validate() {
 	for i := 0; i < v.Field.Len(); i++ {
 		s := v.Field.Index(i)
 		ok := v.Pattern.MatchString(s.String())

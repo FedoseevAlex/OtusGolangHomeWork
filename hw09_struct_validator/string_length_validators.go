@@ -33,7 +33,7 @@ func (v *StrLenValidator) Validate() {
 	)
 }
 
-// TODO: write test here
+// TODO: write test here.
 func parseLenValidatorTag(tag string) (length int, err error) {
 	// Assume that tag is in format len:<N> where N is desired length
 	tagParts := strings.Split(tag, ":")

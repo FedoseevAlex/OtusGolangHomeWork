@@ -80,7 +80,7 @@ var validationSelector = ValidationSelector{
 	}: NewStrRegexpSliceValidator,
 }
 
-// This function parses tag and calls initializers for validators
+// This function parses tag and calls initializers for validators.
 func prepareValidators(field reflect.Value, fieldInfo reflect.StructField) (vs []Validator, err error) {
 	var (
 		kind     reflect.Kind

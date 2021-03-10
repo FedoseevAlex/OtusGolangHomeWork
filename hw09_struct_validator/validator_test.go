@@ -2,7 +2,6 @@ package hw09_struct_validator //nolint:golint,stylecheck,revive
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -23,10 +22,8 @@ type (
 	}
 
 	App struct {
-		Version  string   `validate:"len:5"`
-		Features []string `validate:"len:2"`
+		Version string `validate:"len:5"`
 	}
-
 	Token struct {
 		Header    []byte
 		Payload   []byte
@@ -37,29 +34,76 @@ type (
 		Code int    `validate:"in:200,404,500"`
 		Body string `json:"omitempty"`
 	}
+
+	StrLenCheck struct {
+		StrLen string `validate:"len:5"`
+	}
+	StrLenSliceCheck struct {
+		StrLenSlice []string `validate:"len:2"`
+	}
+
+	StrRegexpCheck struct {
+		StrRegexp string `validate:"regexp:^a+$"`
+	}
+	StrRegexpSliceCheck struct {
+		StrRegexpSlice []string `validate:"regexp:^a+$"`
+	}
 )
 
 func TestValidate(t *testing.T) {
 	tests := []struct {
+		name        string
 		in          interface{}
 		expectedErr error
 	}{
 		{
-			in:          App{Version: "five!", Features: []string{"aa", "bb", "cc"}},
+			name:        "valid length case",
+			in:          StrLenCheck{StrLen: "five!"},
+			expectedErr: nil,
+		}, {
+			name:        "invalid length case",
+			in:          StrLenCheck{StrLen: "length is not five"},
+			expectedErr: ErrStrLengthInvalid,
+		},
+		{
+			name:        "valid length case in slice",
+			in:          StrLenSliceCheck{StrLenSlice: []string{"aa", "bb"}},
 			expectedErr: nil,
 		},
 		{
-			in:          App{Version: "length is not five", Features: []string{"aa", "bb", "cc", "dd"}},
+			name:        "invalid length case in slice",
+			in:          StrLenSliceCheck{StrLenSlice: []string{"a", "bb"}},
 			expectedErr: ErrStrLengthInvalid,
 		},
 		{
-			in:          App{Version: "five!", Features: []string{"aaa", "bb", "cc", "ddd"}},
+			name:        "invalid length case in slice",
+			in:          StrLenSliceCheck{StrLenSlice: []string{"aaa", "bb"}},
 			expectedErr: ErrStrLengthInvalid,
+		},
+		{
+			name:        "valid regexp check",
+			in:          StrRegexpCheck{StrRegexp: "aa"},
+			expectedErr: nil,
+		},
+		{
+			name:        "invalid regexp check",
+			in:          StrRegexpCheck{StrRegexp: "adfadfa"},
+			expectedErr: ErrRegexpMismatch,
+		},
+		{
+			name:        "valid regexp check in slice",
+			in:          StrRegexpSliceCheck{StrRegexpSlice: []string{"aa", "aaaaaa"}},
+			expectedErr: nil,
+		},
+		{
+			name:        "invalid regexp check in slice",
+			in:          StrRegexpSliceCheck{StrRegexpSlice: []string{"aa", "aaaaba", ""}},
+			expectedErr: ErrRegexpMismatch,
 		},
 	}
 
-	for i, tt := range tests {
-		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			errs := Validate(tt.in)
 
 			if tt.expectedErr == nil {
