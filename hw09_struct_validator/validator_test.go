@@ -1,9 +1,11 @@
-package hw09structvalidator
+package hw09_struct_validator //nolint:golint,stylecheck,revive
 
 import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
@@ -21,7 +23,8 @@ type (
 	}
 
 	App struct {
-		Version string `validate:"len:5"`
+		Version  string   `validate:"len:5"`
+		Features []string `validate:"len:2"`
 	}
 
 	Token struct {
@@ -42,19 +45,34 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			in:          App{Version: "five!", Features: []string{"aa", "bb", "cc"}},
+			expectedErr: nil,
 		},
-		// ...
-		// Place your code here.
+		{
+			in:          App{Version: "length is not five", Features: []string{"aa", "bb", "cc", "dd"}},
+			expectedErr: ErrStrLengthInvalid,
+		},
+		{
+			in:          App{Version: "five!", Features: []string{"aaa", "bb", "cc", "ddd"}},
+			expectedErr: ErrStrLengthInvalid,
+		},
 	}
 
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			tt := tt
-			t.Parallel()
+			errs := Validate(tt.in)
 
-			// Place your code here.
-			_ = tt
+			if tt.expectedErr == nil {
+				require.NoError(t, errs)
+				return
+			}
+
+			var validationErrors ValidationErrors
+			require.ErrorAs(t, errs, &validationErrors)
+
+			for _, err := range validationErrors {
+				require.ErrorIs(t, err.Err, tt.expectedErr)
+			}
 		})
 	}
 }
