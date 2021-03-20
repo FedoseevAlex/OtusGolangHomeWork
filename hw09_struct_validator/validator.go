@@ -1,17 +1,159 @@
-package hw09structvalidator
+package hw09_struct_validator //nolint:golint,stylecheck,revive
 
-type ValidationError struct {
-	Field string
-	Err   error
-}
+import (
+	"reflect"
+	"strings"
 
-type ValidationErrors []ValidationError
+	"github.com/pkg/errors"
+)
 
-func (v ValidationErrors) Error() string {
-	panic("implement me")
-}
+const (
+	validateTagName = "validate"
+)
 
 func Validate(v interface{}) error {
-	// Place your code here.
+	vType := reflect.TypeOf(v)
+	if vType.Kind() != reflect.Struct {
+		return ErrOnlyStructsAllowed
+	}
+	vVal := reflect.ValueOf(v)
+
+	vErrs := make(ValidationErrors, 0, vVal.NumField())
+	validators := make([]Validator, 0, vVal.NumField())
+
+	for i := 0; i < vVal.NumField(); i++ {
+		fieldVal := vVal.Field(i)
+		fieldName := vType.Field(i).Name
+		fieldTag := vType.Field(i).Tag
+
+		_ = fieldName
+		_ = fieldTag
+
+		if !fieldVal.CanInterface() {
+			// skip unexported field
+			continue
+		}
+
+		fieldInfo := vType.Field(i)
+		if _, ok := fieldInfo.Tag.Lookup(validateTagName); !ok {
+			// skip if validation tag not found
+			continue
+		}
+
+		vs, err := prepareValidators(fieldVal, fieldInfo)
+		if err != nil {
+			return err
+		}
+
+		validators = append(validators, vs...)
+	}
+
+	for _, v := range validators {
+		v.Validate()
+		vErrs = append(vErrs, v.Errors()...)
+	}
+
+	if len(vErrs) != 0 {
+		return vErrs
+	}
 	return nil
+}
+
+var validationSelector = ValidationSelector{
+	{
+		Kind:           reflect.String,
+		ValidationType: "len",
+	}: NewStrLenValidator,
+	{
+		Kind:           reflect.Slice,
+		ElemKind:       reflect.String,
+		ValidationType: "len",
+	}: NewStrLenSliceValidator,
+	{
+		Kind:           reflect.String,
+		ValidationType: "regexp",
+	}: NewStrRegexpValidator,
+	{
+		Kind:           reflect.Slice,
+		ElemKind:       reflect.String,
+		ValidationType: "regexp",
+	}: NewStrRegexpSliceValidator,
+	{
+		Kind:           reflect.String,
+		ValidationType: "in",
+	}: NewStrInValidator,
+	{
+		Kind:           reflect.Slice,
+		ElemKind:       reflect.String,
+		ValidationType: "in",
+	}: NewStrInSliceValidator,
+	{
+		Kind:           reflect.Int,
+		ValidationType: "min",
+	}: NewIntMinValidator,
+	{
+		Kind:           reflect.Slice,
+		ElemKind:       reflect.Int,
+		ValidationType: "min",
+	}: NewIntMinSliceValidator,
+	{
+		Kind:           reflect.Int,
+		ValidationType: "max",
+	}: NewIntMaxValidator,
+	{
+		Kind:           reflect.Slice,
+		ElemKind:       reflect.Int,
+		ValidationType: "max",
+	}: NewIntMaxSliceValidator,
+	{
+		Kind:           reflect.Int,
+		ValidationType: "in",
+	}: NewIntInValidator,
+	{
+		Kind:           reflect.Slice,
+		ElemKind:       reflect.Int,
+		ValidationType: "in",
+	}: NewIntInSliceValidator,
+}
+
+// This function parses tag and calls initializers for validators.
+func prepareValidators(field reflect.Value, fieldInfo reflect.StructField) (vs []Validator, err error) {
+	var (
+		kind     reflect.Kind
+		elemKind reflect.Kind
+	)
+
+	kind = fieldInfo.Type.Kind()
+	if kind == reflect.Slice {
+		elemKind = fieldInfo.Type.Elem().Kind()
+	}
+
+	// Validator descriptions
+	vds := fieldInfo.Tag.Get(validateTagName)
+	vdsParts := strings.Split(vds, "|")
+
+	for _, vd := range vdsParts {
+		vType := strings.SplitN(vd, ":", 2)
+		key := ValidationSelectorKey{
+			Kind:           kind,
+			ElemKind:       elemKind,
+			ValidationType: vType[0],
+		}
+
+		initFunc, ok := validationSelector[key]
+		if !ok {
+			err = errors.Wrapf(ErrUnknownValidator, "validator not found: %s %s", vType, vd)
+			return
+		}
+
+		var validator Validator
+
+		validator, err = initFunc(field, fieldInfo.Name, vd)
+		if err != nil {
+			return
+		}
+
+		vs = append(vs, validator)
+	}
+	return
 }
