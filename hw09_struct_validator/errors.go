@@ -17,6 +17,8 @@ var (
 	ErrLengthIsNotNumeric  = errors.New("failed to convert length to int")
 	ErrRegexpMismatch      = errors.New("given string doesn't match pattern")
 	ErrNotInChoices        = errors.New("value not present in available choices")
+	ErrBelowMinimum        = errors.New("value is below allowed minimum")
+	ErrAboveMaximum        = errors.New("value is above allowed maximum")
 )
 
 type ValidationError struct {

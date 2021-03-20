@@ -19,7 +19,7 @@ func (v BaseValidator) Errors() ValidationErrors {
 
 // Type for validator initializer function.
 // Requires reflect.Value and reflect.StructField to build a validator.
-type ValidatorInitFunc func(fieldValue reflect.Value, fieldInfo reflect.StructField) (Validator, error)
+type ValidatorInitFunc func(fieldValue reflect.Value, name, tag string) (Validator, error)
 
 type ValidationSelectorKey struct {
 	Kind           reflect.Kind

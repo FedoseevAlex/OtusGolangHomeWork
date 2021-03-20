@@ -33,28 +33,31 @@ func (v *StrLenValidator) Validate() {
 	)
 }
 
-// TODO: write test here.
-func parseLenValidatorTag(tag string) (length int, err error) {
+func parseStrLenValidatorTag(tag string) (length int, err error) {
 	// Assume that tag is in format len:<N> where N is desired length
 	tagParts := strings.Split(tag, ":")
-	if len(tagParts) != 2 {
+	if len(tagParts) != 2 || tagParts[1] == "" {
 		err = ErrCorruptedTag
 		return
 	}
 
 	length, err = strconv.Atoi(tagParts[1])
 	if err != nil {
+		err = errors.Wrap(ErrTagParse, err.Error())
+		return
+	}
+
+	if length < 0 {
+		err = errors.Wrapf(ErrTagParse, "negative length specified")
+		length = 0
 		return
 	}
 
 	return
 }
 
-func NewStrLenValidator(fieldValue reflect.Value, fieldInfo reflect.StructField) (Validator, error) {
-	tag := fieldInfo.Tag.Get(validateTagName)
-	fieldName := fieldInfo.Name
-
-	length, err := parseLenValidatorTag(tag)
+func NewStrLenValidator(fieldValue reflect.Value, fieldName, tag string) (Validator, error) {
+	length, err := parseStrLenValidatorTag(tag)
 	if err != nil {
 		return nil, errors.Wrapf(
 			ErrTagParse,
@@ -96,11 +99,8 @@ func (v *StrLenSliceValidator) Validate() {
 	}
 }
 
-func NewStrLenSliceValidator(fieldValue reflect.Value, fieldInfo reflect.StructField) (Validator, error) {
-	tag := fieldInfo.Tag.Get(validateTagName)
-	fieldName := fieldInfo.Name
-
-	length, err := parseLenValidatorTag(tag)
+func NewStrLenSliceValidator(fieldValue reflect.Value, fieldName, tag string) (Validator, error) {
+	length, err := parseStrLenValidatorTag(tag)
 	if err != nil {
 		return nil, errors.Wrapf(
 			ErrTagParse,

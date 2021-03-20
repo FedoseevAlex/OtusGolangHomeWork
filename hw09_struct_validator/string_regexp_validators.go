@@ -8,17 +8,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: Write tests.
 // Parses tag and tries to compile pattern.
 func parseRegexpValidatorTag(tag string) (pattern *regexp.Regexp, err error) {
 	tagParts := strings.SplitN(tag, ":", 2)
-	if len(tagParts) != 2 {
+	if len(tagParts) < 2 || tagParts[1] == "" {
 		err = ErrCorruptedTag
 		return
 	}
 
 	pattern, err = regexp.Compile(tagParts[1])
 	if err != nil {
+		err = errors.Wrap(ErrTagParse, err.Error())
+		pattern = nil
 		return
 	}
 
@@ -44,15 +45,13 @@ func (v *StrRegexpValidator) Validate() {
 	}
 }
 
-func NewStrRegexpValidator(fieldValue reflect.Value, fieldInfo reflect.StructField) (Validator, error) {
-	tag := fieldInfo.Tag.Get(validateTagName)
-
+func NewStrRegexpValidator(fieldValue reflect.Value, fieldName, tag string) (Validator, error) {
 	pattern, err := parseRegexpValidatorTag(tag)
 	if err != nil {
 		return nil, errors.Wrapf(
 			ErrTagParse,
 			"field: %s, tag: %s, err: %s",
-			fieldInfo.Name,
+			fieldName,
 			tag,
 			err.Error(),
 		)
@@ -65,15 +64,13 @@ func NewStrRegexpValidator(fieldValue reflect.Value, fieldInfo reflect.StructFie
 
 type StrRegexpSliceValidator StrRegexpValidator
 
-func NewStrRegexpSliceValidator(fieldValue reflect.Value, fieldInfo reflect.StructField) (Validator, error) {
-	tag := fieldInfo.Tag.Get(validateTagName)
-
+func NewStrRegexpSliceValidator(fieldValue reflect.Value, fieldName, tag string) (Validator, error) {
 	pattern, err := parseRegexpValidatorTag(tag)
 	if err != nil {
 		return nil, errors.Wrapf(
 			ErrTagParse,
 			"field: %s, tag: %s, err: %s",
-			fieldInfo.Name,
+			fieldName,
 			tag,
 			err.Error(),
 		)

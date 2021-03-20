@@ -7,9 +7,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: write test here.
-func parseInValidatorTag(tag string) (choices []string, err error) {
-	// Assume that tag is in format in:<N> where N is desired length
+func parseStrInValidatorTag(tag string) (choices []string, err error) {
+	// Assume that tag is in format in:<choices> where "choices" are comma separated allowed values
 	tagParts := strings.Split(tag, ":")
 	if len(tagParts) != 2 || tagParts[1] == "" {
 		err = ErrCorruptedTag
@@ -46,11 +45,8 @@ func (v *StrInValidator) Validate() {
 	)
 }
 
-func NewStrInValidator(fieldValue reflect.Value, fieldInfo reflect.StructField) (Validator, error) {
-	tag := fieldInfo.Tag.Get(validateTagName)
-	fieldName := fieldInfo.Name
-
-	strs, err := parseInValidatorTag(tag)
+func NewStrInValidator(fieldValue reflect.Value, fieldName, tag string) (Validator, error) {
+	strs, err := parseStrInValidatorTag(tag)
 	if err != nil {
 		return nil, errors.Wrapf(
 			ErrTagParse,
@@ -99,11 +95,8 @@ func (v *StrInSliceValidator) Validate() {
 	}
 }
 
-func NewStrInSliceValidator(fieldValue reflect.Value, fieldInfo reflect.StructField) (Validator, error) {
-	tag := fieldInfo.Tag.Get(validateTagName)
-	fieldName := fieldInfo.Name
-
-	strs, err := parseInValidatorTag(tag)
+func NewStrInSliceValidator(fieldValue reflect.Value, fieldName, tag string) (Validator, error) {
+	strs, err := parseStrInValidatorTag(tag)
 	if err != nil {
 		return nil, errors.Wrapf(
 			ErrTagParse,

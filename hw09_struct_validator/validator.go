@@ -87,6 +87,33 @@ var validationSelector = ValidationSelector{
 		ElemKind:       reflect.String,
 		ValidationType: "in",
 	}: NewStrInSliceValidator,
+	{
+		Kind:           reflect.Int,
+		ValidationType: "min",
+	}: NewIntMinValidator,
+	{
+		Kind:           reflect.Slice,
+		ElemKind:       reflect.Int,
+		ValidationType: "min",
+	}: NewIntMinSliceValidator,
+	{
+		Kind:           reflect.Int,
+		ValidationType: "max",
+	}: NewIntMaxValidator,
+	{
+		Kind:           reflect.Slice,
+		ElemKind:       reflect.Int,
+		ValidationType: "max",
+	}: NewIntMaxSliceValidator,
+	{
+		Kind:           reflect.Int,
+		ValidationType: "in",
+	}: NewIntInValidator,
+	{
+		Kind:           reflect.Slice,
+		ElemKind:       reflect.Int,
+		ValidationType: "in",
+	}: NewIntInSliceValidator,
 }
 
 // This function parses tag and calls initializers for validators.
@@ -121,13 +148,12 @@ func prepareValidators(field reflect.Value, fieldInfo reflect.StructField) (vs [
 
 		var validator Validator
 
-		validator, err = initFunc(field, fieldInfo)
+		validator, err = initFunc(field, fieldInfo.Name, vd)
 		if err != nil {
 			return
 		}
 
 		vs = append(vs, validator)
 	}
-
 	return
 }
