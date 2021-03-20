@@ -1,4 +1,4 @@
-package hw09_struct_validator //nolint:golint,stylecheck,revive
+package hw09_struct_validator //nolint:golint,stylecheck,revive,dupl
 
 import (
 	"reflect"
@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: write test here.
 func parseIntMinValidatorTag(tag string) (min int, err error) {
 	// Assume that tag is in format min:<N> where "N" is numeric string
 	tagParts := strings.Split(tag, ":")
@@ -75,7 +74,7 @@ func (v *IntMinSliceValidator) Validate() {
 	for i := 0; i < v.Field.Len(); i++ {
 		value := int(v.Field.Index(i).Int())
 
-		if int(value) >= v.Min {
+		if value >= v.Min {
 			// It's okay if value greater or equal to minimum.
 			return
 		}

@@ -1,4 +1,4 @@
-package hw09_struct_validator //nolint:golint,stylecheck,revive
+package hw09_struct_validator //nolint:golint,stylecheck,revive,dupl
 
 import (
 	"reflect"
@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: write test here.
 func parseIntMaxValidatorTag(tag string) (min int, err error) {
 	// Assume that tag is in format max:<N> where "N" is numeric string
 	tagParts := strings.Split(tag, ":")
@@ -75,7 +74,7 @@ func (v *IntMaxSliceValidator) Validate() {
 	for i := 0; i < v.Field.Len(); i++ {
 		value := int(v.Field.Index(i).Int())
 
-		if int(value) <= v.Max {
+		if value <= v.Max {
 			// It's okay if value less or equal to maximum.
 			return
 		}

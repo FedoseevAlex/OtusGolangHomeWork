@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: write test here.
 func parseIntInValidatorTag(tag string) (choices []int, err error) {
 	// Assume that tag is in format in:<choices> where "choices" are comma separated allowed values
 	tagParts := strings.Split(tag, ":")
