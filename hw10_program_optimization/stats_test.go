@@ -36,4 +36,44 @@ func TestGetDomainStat(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, DomainStat{}, result)
 	})
+
+	t.Run("empty input", func(t *testing.T) {
+		result, err := GetDomainStat(bytes.NewBufferString(""), "com")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{}, result)
+	})
+
+	t.Run("no email field", func(t *testing.T) {
+		d := `{"Id":1}`
+		result, err := GetDomainStat(bytes.NewBufferString(d), "com")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{}, result)
+	})
+
+	t.Run("corrupted json", func(t *testing.T) {
+		d := `{ Email: real_mail@orly.com`
+		result, err := GetDomainStat(bytes.NewBufferString(d), "com")
+		require.Error(t, err)
+		require.Equal(t, DomainStat(nil), result)
+	})
+
+	t.Run("empty entries", func(t *testing.T) {
+		d := `{}
+			  {}
+	  	      {}`
+		result, err := GetDomainStat(bytes.NewBufferString(d), "com")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{}, result)
+	})
+
+	t.Run("two email fields", func(t *testing.T) {
+		d := `{"Email":"nulla@Linktype.com", "Email":"nulla@Linktype.ru"}`
+		result, err := GetDomainStat(bytes.NewBufferString(d), "com")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{}, result)
+
+		result, err = GetDomainStat(bytes.NewBufferString(d), "ru")
+		require.NoError(t, err)
+		require.Equal(t, DomainStat{"linktype.ru": 1}, result)
+	})
 }
