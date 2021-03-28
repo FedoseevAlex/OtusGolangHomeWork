@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	"net"
 	"sync"
@@ -61,5 +62,70 @@ func TestTelnetClient(t *testing.T) {
 		}()
 
 		wg.Wait()
+	})
+
+	t.Run("eof receive check", func(t *testing.T) {
+		l, err := net.Listen("tcp", "127.0.0.1:")
+		require.NoError(t, err)
+		defer func() { require.NoError(t, l.Close()) }()
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+
+		client := NewTelnetClient(l.Addr().String(), time.Second, ioutil.NopCloser(in), out)
+		require.NoError(t, client.Connect())
+		defer func() { require.NoError(t, client.Close()) }()
+
+		go func() {
+			defer wg.Done()
+
+			err = client.Receive()
+			require.NoError(t, err)
+		}()
+
+		go func() {
+			defer wg.Done()
+			conn, err := l.Accept()
+			require.NoError(t, err)
+			defer func() { require.NoError(t, conn.Close()) }()
+		}()
+
+		wg.Wait()
+	})
+
+	t.Run("send without connection", func(t *testing.T) {
+		tc := NewTelnetClient("localhost:4242", time.Second, nil, nil)
+		require.ErrorIs(t, tc.Send(), ErrNoConnection)
+	})
+
+	t.Run("receive without connection", func(t *testing.T) {
+		tc := NewTelnetClient("localhost:4242", time.Second, nil, nil)
+		require.ErrorIs(t, tc.Receive(), ErrNoConnection)
+	})
+
+	t.Run("close without connection", func(t *testing.T) {
+		tc := NewTelnetClient("localhost:4242", time.Second, nil, nil)
+		require.ErrorIs(t, tc.Close(), ErrNoConnection)
+	})
+
+	t.Run("timeout error", func(t *testing.T) {
+		tc := NewTelnetClient("ya.ru:4242", time.Microsecond, nil, nil)
+
+		var netErr net.Error
+
+		rawErr := tc.Connect()
+		ok := errors.As(rawErr, &netErr)
+
+		require.True(t, ok, "error doesn't implement net.Error interface")
+		require.True(t, netErr.Timeout(), "error is timeout")
+	})
+
+	t.Run("connection refused", func(t *testing.T) {
+		tc := NewTelnetClient("localhost:9090", time.Second, nil, nil)
+		err := tc.Connect()
+		require.Contains(t, err.Error(), "connection refused")
 	})
 }
