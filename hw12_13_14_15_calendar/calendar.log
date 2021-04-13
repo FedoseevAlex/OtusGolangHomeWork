@@ -1,0 +1,4 @@
+{"level":"info","time":"2021-04-15T10:02:52+03:00","message":"calendar is running..."}
+{"level":"debug","address":"localhost:8080","time":"2021-04-15T10:02:52+03:00","message":"HTTP server started"}
+{"level":"debug","time":"2021-04-15T10:02:56+03:00","message":"HTTP server stopped"}
+{"level":"error","error":"http: Server closed","time":"2021-04-15T10:02:56+03:00","message":"failed to start http server"}
